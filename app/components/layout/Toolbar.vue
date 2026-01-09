@@ -91,11 +91,7 @@ const handleSave = () => {
     URL.revokeObjectURL(url);
 
     // Ton toast personnalisé
-    toast({
-      message: 'Your workflow has been downloaded as JSON.',
-      type: 'success',
-      position: 'bottom-right',
-    });
+    alert('Workflow enregistré avec succès !');
   } catch (err) {
     console.error("Erreur lors de la génération du fichier JSON", err);
   }

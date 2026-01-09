@@ -7,48 +7,26 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bot, ListTodo, Settings } from 'lucide-vue-next';
 
-// TOOL_CONFIGS doit être importé comme valeur (runtime)
+// TOOL_CONFIGS importé comme valeur runtime
 import { type AgentData, type TaskData, type ToolName, TOOL_CONFIGS } from '@/types/workflow';
 
 const workflowStore = useWorkflowStore();
 
 // Sélections réactives
-const selectedBlock = computed(() => 
+const selectedBlock = computed(() =>
   workflowStore.blocks.find(b => b.id === workflowStore.selectedBlockId)
 );
 
 const isAgent = computed(() => selectedBlock.value?.type === 'agent');
 const toolOptions = Object.keys(TOOL_CONFIGS) as ToolName[];
 
-// Helpers de mise à jour
+// Helper de mise à jour simple
 const updateBlock = (updates: Partial<AgentData | TaskData>) => {
   if (!selectedBlock.value) return;
   workflowStore.updateBlock(selectedBlock.value.id, updates);
 };
 
-// Helpers pour la gestion multiple des outils
-const selectKey = ref(0);
-
-const addTool = (toolName: string) => {
-  if (!selectedBlock.value) return;
-  const currentTools = [...(selectedBlock.value.data as AgentData).tools];
-  
-  if (!currentTools.includes(toolName as ToolName)) {
-    updateBlock({ tools: [...currentTools, toolName as ToolName] });
-    
-    // Force le reset du composant Select
-    selectKey.value++; 
-  }
-};
-
-const removeTool = (toolName: string) => {
-  if (!selectedBlock.value) return;
-  const currentTools = (selectedBlock.value.data as AgentData).tools;
-  const newTools = currentTools.filter(t => t !== toolName);
-  updateBlock({ tools: newTools });
-};
-
-// Logique spécifique à TaskData (ToolParameterFields en React)
+// Pour TaskData
 const taskData = computed(() => !isAgent.value ? (selectedBlock.value?.data as TaskData) : null);
 const currentTool = computed(() => taskData.value?.toolName || 'groq');
 const currentConfig = computed(() => TOOL_CONFIGS[currentTool.value]);
@@ -66,6 +44,8 @@ const updateAnalysisConfig = (fieldName: string, value: string) => {
 
 <template>
   <aside class="w-80 bg-sidebar border-l border-sidebar-border flex flex-col overflow-hidden">
+    
+    <!-- Bloc vide si aucun élément sélectionné -->
     <div v-if="!selectedBlock" class="flex-1 flex flex-col">
       <div class="p-4 border-b border-sidebar-border flex items-center gap-2">
         <Settings class="w-4 h-4 text-muted-foreground" />
@@ -81,6 +61,7 @@ const updateAnalysisConfig = (fieldName: string, value: string) => {
       </div>
     </div>
 
+    <!-- Bloc propriétés -->
     <div v-else class="flex-1 flex flex-col overflow-hidden">
       <div class="p-4 border-b border-sidebar-border flex items-center gap-2">
         <Bot v-if="isAgent" class="w-4 h-4 text-(--agent-color)" />
@@ -91,7 +72,8 @@ const updateAnalysisConfig = (fieldName: string, value: string) => {
       </div>
 
       <div class="flex-1 overflow-y-auto p-4 space-y-4">
-        
+
+        <!-- Agent -->
         <div v-if="isAgent" class="space-y-4">
           <div class="space-y-2">
             <Label>Nom</Label>
@@ -102,47 +84,22 @@ const updateAnalysisConfig = (fieldName: string, value: string) => {
             />
           </div>
 
-        <div class="space-y-2">
-          <Label>Outils</Label>
-          
-          <div class="flex flex-wrap gap-2 mb-3">
-            <div 
-              v-for="tool in (selectedBlock.data as AgentData).tools" 
-              :key="tool"
-              class="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-2 py-1 rounded-md text-xs font-medium text-primary"
+          <div class="space-y-2">
+            <Label>Outil (sélection unique)</Label>
+            <Select
+              :model-value="(selectedBlock.data as AgentData).tools[0] || ''"
+              @update:model-value="v => updateBlock({ tools: v ? [v as ToolName] : [] })"
             >
-              {{ tool }}
-              <button 
-                @click="removeTool(tool)" 
-                class="hover:text-destructive transition-colors"
-              >
-                <span class="sr-only">Retirer</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-              </button>
-            </div>
-            <p v-if="(selectedBlock.data as AgentData).tools.length === 0" class="text-xs text-muted-foreground italic">
-              Aucun outil assigné...
-            </p>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner un outil..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="tool in toolOptions" :key="tool" :value="tool">
+                  {{ tool }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-
-          <Select
-            :key="selectKey" 
-            @update:model-value="v => addTool(v as string)"
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Ajouter un outil..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem 
-                v-for="tool in toolOptions.filter(t => !(selectedBlock?.data as AgentData).tools.includes(t))" 
-                :key="tool" 
-                :value="tool"
-              >
-                {{ tool }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
 
           <div class="space-y-2">
             <Label>System Prompt</Label>
@@ -155,6 +112,7 @@ const updateAnalysisConfig = (fieldName: string, value: string) => {
           </div>
         </div>
 
+        <!-- Task -->
         <div v-else-if="taskData" class="space-y-4">
           <div class="space-y-2">
             <Label>Outil</Label>
