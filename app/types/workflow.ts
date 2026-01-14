@@ -81,7 +81,7 @@ export interface LogEntry {
 
 export const TOOL_CONFIGS: Record<ToolName, ToolConfig> = {
   fetch: { param: 'url', placeholder: 'https://example.com', label: 'URL' },
-  weather: { param: 'city', placeholder: 'Paris', label: 'City' },
+  weather: { param: 'city', placeholder: 'Paris', label: 'Ville' },
   writeFile: { param: 'filename', placeholder: 'output.txt', label: 'Filename', default: 'output.txt' },
   lmStudio: { param: 'input', placeholder: 'Vos instructions...', label: 'Prompt', type: 'textarea' },
   bytez: { 

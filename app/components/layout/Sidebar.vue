@@ -28,7 +28,7 @@ const handleAddBlock = (type: 'agent' | 'task') => {
     <div class="p-4 border-b border-sidebar-border">
       <div class="flex items-center gap-3">
         <div>
-          <h1 class="font-semibold text-foreground">AgentFlow</h1>
+          <!-- <h1 class="font-semibold text-foreground">AgentFlow</h1> -->
           <p class="text-xs text-muted-foreground">Constructeur de workflows IA</p>
         </div>
       </div>
